@@ -1,0 +1,1061 @@
+Sub EV_001YRS_except_nacellerepairs()
+'This macro populates the email information from a selected folder such as 'Converstaion ID', 'Creation Time', 'Sender', SenderName', 'Sender email address', 'To', 'Recipients address'
+Dim xlApp As Excel.Application
+Dim xlWB As Excel.Workbook
+Dim i, j, k, lr As Long
+Dim arrHeader As Variant
+Dim olItems As Object
+Dim coll As Collection
+Dim recips As Outlook.Recipients
+Dim recip As Outlook.Recipient
+Dim pa As Outlook.PropertyAccessor
+Const PR_SMTP_ADDRESS As String = _
+    "http://schemas.microsoft.com/mapi/proptag/0x39FE001E"
+arrHeader = Array("Conversation Id", "Date Created", "Sender", "Sender's Name", "Sender's e-mail", "Subject", "To", "Recipients", "Entry ID", "Signature")
+Set xlApp = CreateObject("Excel.Application")
+xlApp.Visible = True
+Set xlWB = xlApp.Workbooks.Add
+Set ws = xlWB.Sheets.Add(After:=xlWB.Sheets(xlWB.Sheets.Count))
+Set ws1 = xlWB.Sheets.Add(After:=xlWB.Sheets(xlWB.Sheets.Count))
+ws.Name = "Temp"
+ws1.Name = "signature"
+i = 2
+xlWB.Sheets(1).Activate
+On Error Resume Next
+xlWB.Sheets(1).Range("A1").Resize(1, UBound(arrHeader) + 1).Value = arrHeader
+On Error GoTo -1
+For Each olItems In Application.ActiveExplorer.CurrentFolder.Items
+    If olItems.Class = olMail Then
+    With xlWB
+        .Activate
+        Set olSender = olItems.sender
+        If Not (olSender Is Nothing) Then
+          Set olEU = olSender.GetExchangeUser
+          If olEU Is Nothing Then
+                xlWB.Sheets(1).Cells(i, "E").Value = olItems.SenderEmailAddress
+          ElseIf olEU.Alias <> "asg.chv0.mb.nacelrep" Then
+                xlWB.Sheets(1).Cells(i, "E").Value = olEU.PrimarySmtpAddress
+          Else
+          GoTo nxt
+          End If
+        End If
+        xlWB.Sheets(1).Cells(i, "A").Value = olItems.ConversationID
+        xlWB.Sheets(1).Cells(i, "B").Value = olItems.CreationTime
+        xlWB.Sheets(1).Cells(i, "C").Value = olItems.sender
+        xlWB.Sheets(1).Cells(i, "D").Value = olItems.SenderName
+        xlWB.Sheets(1).Cells(i, "F").Value = olItems.Subject
+        xlWB.Sheets(1).Cells(i, "G").Value = olItems.To
+        Set recips = olItems.Recipients
+        Set coll = New Collection
+        For Each recip In recips
+            Set pa = recip.PropertyAccessor
+            coll.Add pa.GetProperty(PR_SMTP_ADDRESS)
+        Next
+        For k = 1 To coll.Count
+            xlWB.Sheets(2).Cells(k, 1) = coll.Item(k)
+        Next
+        xlWB.Sheets("Temp").Activate
+        xlWB.Sheets("Temp").Range("A:A").RemoveDuplicates Columns:=1, Header:=xlNo
+        xlWB.Sheets("Temp").Range("B1").Value = xlWB.Sheets("Temp").Range("A1").Value
+        j = 2
+        While xlWB.Sheets("Temp").Cells(j, 1).Value <> ""
+            xlWB.Sheets("Temp").Cells(j, 2) = xlWB.Sheets("Temp").Cells(j - 1, 2) & ";" & xlWB.Sheets("Temp").Cells(j, 1)
+        j = j + 1
+        Wend
+        xlWB.Sheets(1).Activate
+        xlWB.Sheets(1).Cells(i, "H").Value = xlWB.Sheets("Temp").Cells(j - 1, 2)
+        xlWB.Sheets(1).Cells(i, "I").Value = olItems.EntryId
+        If xlWB.Sheets(1).Cells(i, "E").Value <> "nacellerepairs@collins.com" Then
+            With xlWB.Sheets("signature")
+                .Activate
+                Range("A1").Value = olItems.Body
+                RegexPattern1
+                RegexPattern2
+            End With
+        xlWB.Sheets(1).Cells(i, "J").Value = xlWB.Sheets("signature").Range("C1")
+        Else
+        xlWB.Sheets(1).Cells(i, "J").Value = ""
+        End If
+    
+    End With
+    End If
+i = i + 1
+xlWB.Sheets("Temp").Cells.Clear
+xlWB.Sheets("signature").Cells.Clear
+Set coll = Nothing
+nxt:
+Next olItems
+xlWB.Sheets(2).Visible = xlVeryHidden
+xlWB.Worksheets(1).Cells.EntireColumn.AutoFit
+MsgBox "Export Complete", vbInformation
+Set xlApp = Nothing
+Set xlWB = Nothing
+Set olItems = Nothing
+Set olInboxFolder = Nothing
+Set olNs = Nothing
+End Sub
+Sub SENT_FOLDER_only_nacellerepairs()
+'This macro populates the email information from a selected folder such as 'Converstaion ID', 'Creation Time', 'Sender', SenderName', 'Sender email address', 'To', 'Recipients address'
+Dim xlApp As Excel.Application
+Dim xlWB As Excel.Workbook
+Dim i, j, k, lr As Long
+Dim arrHeader As Variant
+Dim olItems As Object
+Dim coll As Collection
+Dim recips As Outlook.Recipients
+Dim recip As Outlook.Recipient
+Dim pa As Outlook.PropertyAccessor
+Const PR_SMTP_ADDRESS As String = _
+    "http://schemas.microsoft.com/mapi/proptag/0x39FE001E"
+arrHeader = Array("Conversation Id", "Date Created", "Sender", "Sender's Name", "Sender's e-mail", "Subject", "To", "Recipients", "Entry ID", "Signature")
+Set xlApp = CreateObject("Excel.Application")
+xlApp.Visible = True
+Set xlWB = xlApp.Workbooks.Add
+Set ws = xlWB.Sheets.Add(After:=xlWB.Sheets(xlWB.Sheets.Count))
+Set ws1 = xlWB.Sheets.Add(After:=xlWB.Sheets(xlWB.Sheets.Count))
+ws.Name = "Temp"
+ws1.Name = "signature"
+i = 2
+xlWB.Sheets(1).Activate
+On Error Resume Next
+xlWB.Sheets(1).Range("A1").Resize(1, UBound(arrHeader) + 1).Value = arrHeader
+On Error GoTo -1
+For Each olItems In Application.ActiveExplorer.CurrentFolder.Items
+    If olItems.Class = olMail Then
+    With xlWB
+        .Activate
+        Set olSender = olItems.sender
+        If Not (olSender Is Nothing) Then
+          Set olEU = olSender.GetExchangeUser
+          If olEU Is Nothing Then
+                xlWB.Sheets(1).Cells(i, "E").Value = olItems.SenderEmailAddress
+          ElseIf olEU.Alias = "asg.chv0.mb.nacelrep" Then
+                xlWB.Sheets(1).Cells(i, "E").Value = olEU.PrimarySmtpAddress
+          Else
+          GoTo nxt
+          End If
+        End If
+        xlWB.Sheets(1).Cells(i, "A").Value = olItems.ConversationID
+        xlWB.Sheets(1).Cells(i, "B").Value = olItems.CreationTime
+        xlWB.Sheets(1).Cells(i, "C").Value = olItems.sender
+        xlWB.Sheets(1).Cells(i, "D").Value = olItems.SenderName
+        xlWB.Sheets(1).Cells(i, "F").Value = olItems.Subject
+        xlWB.Sheets(1).Cells(i, "G").Value = olItems.To
+        Set recips = olItems.Recipients
+        Set coll = New Collection
+        For Each recip In recips
+            Set pa = recip.PropertyAccessor
+            coll.Add pa.GetProperty(PR_SMTP_ADDRESS)
+        Next
+        For k = 1 To coll.Count
+            xlWB.Sheets(2).Cells(k, 1) = coll.Item(k)
+        Next
+        xlWB.Sheets("Temp").Activate
+        xlWB.Sheets("Temp").Range("A:A").RemoveDuplicates Columns:=1, Header:=xlNo
+        xlWB.Sheets("Temp").Range("B1").Value = xlWB.Sheets("Temp").Range("A1").Value
+        j = 2
+        While xlWB.Sheets("Temp").Cells(j, 1).Value <> ""
+            xlWB.Sheets("Temp").Cells(j, 2) = xlWB.Sheets("Temp").Cells(j - 1, 2) & ";" & xlWB.Sheets("Temp").Cells(j, 1)
+        j = j + 1
+        Wend
+        xlWB.Sheets(1).Activate
+        xlWB.Sheets(1).Cells(i, "H").Value = xlWB.Sheets("Temp").Cells(j - 1, 2)
+        xlWB.Sheets(1).Cells(i, "I").Value = olItems.EntryId
+        If xlWB.Sheets(1).Cells(i, "E").Value = "nacellerepairs@collins.com" Then
+            With xlWB.Sheets("signature")
+                .Activate
+                xlWB.Sheets("signature").Range("A1").Value = olItems.Body
+                RegexPattern1
+                RegexPattern2
+            End With
+        xlWB.Sheets(1).Cells(i, "J").Value = xlWB.Sheets("signature").Range("C1")
+        Else
+        xlWB.Sheets(1).Cells(i, "J").Value = ""
+        End If
+    
+    End With
+    End If
+i = i + 1
+xlWB.Sheets("Temp").Cells.Clear
+xlWB.Sheets("signature").Cells.Clear
+Set coll = Nothing
+nxt:
+Next olItems
+xlWB.Sheets(2).Visible = xlVeryHidden
+xlWB.Worksheets(1).Cells.EntireColumn.AutoFit
+MsgBox "Export Complete", vbInformation
+Set xlApp = Nothing
+Set xlWB = Nothing
+Set olItems = Nothing
+Set olInboxFolder = Nothing
+Set olNs = Nothing
+End Sub
+Sub From_Text()
+'** This subroutine will fetch latest mail conversation from the mailchain mail body (column A)
+'** Output column is assumed as B, please change accordingly in final sheet
+'** Mail separates by keyword "From: "
+Dim wb As Workbook
+Dim Rng As Range
+Set wb = GetObject(, "Excel.Application").ActiveWorkbook
+wb.Sheets("signature").Activate
+Set Rng = wb.Sheets("signature").Range("Names_Signature")
+lengt = Len(wb.Sheets("signature").Range("A1").Value)
+srchpath = wb.Sheets("signature").Range("A1").Value
+mailPosEnd = InStr(LCase(srchpath), "from: ")
+If mailPosEnd = 0 Then
+    Exit Sub
+Else
+    ActiveWorkbook.Sheets("signature").Range("B1") = Mid(srchpath, 1, mailPosEnd - 1)
+End If
+Set wb = Nothing
+Set Rng = Nothing
+End Sub
+Private Sub RegexPattern1()
+Dim regEx As New RegExp
+Dim strPattern As String
+Dim strInput As String
+Dim Myrange As Range
+Dim wb As Workbook
+Set wb = GetObject(, "Excel.Application").ActiveWorkbook
+If wb.Sheets("signature").Range("B1").Value = "" Then
+Set Myrange = wb.Sheets("signature").Range("A1")
+Else
+Set Myrange = wb.Sheets("signature").Range("B1")
+End If
+strPattern = "[\|\¦]([\w\s]+[\S\W]+)"
+If strPattern <> "" Then
+    strInput = Myrange
+    With regEx
+        .Global = True
+        .MultiLine = True
+        .IgnoreCase = False
+        .Pattern = strPattern
+    End With
+    If regEx.test(strInput) Then
+        wb.Sheets("signature").Range("C1") = regEx.Replace(strInput, "")
+    Else
+        wb.Sheets("signature").Range("C1") = ""
+    End If
+End If
+Set regEx = Nothing
+Set wb = Nothing
+End Sub
+Private Sub RegexPattern2()
+Dim regEx As New RegExp
+Dim strPattern As String
+Dim strInput As String
+Dim Myrange As Range
+Dim wb As Workbook
+Set wb = GetObject(, "Excel.Application").ActiveWorkbook
+Set Myrange = wb.Sheets("signature").Range("C1")
+strPattern = "(^[!@#$%^&*()_+\-=\[\]{};:\\|,.<>\/?]+)|[\S\W]+\n"
+If strPattern <> "" Then
+    strInput = Myrange
+    With regEx
+        .Global = True
+        .MultiLine = True
+        .IgnoreCase = False
+        .Pattern = strPattern
+    End With
+        If regEx.test(strInput) Then
+        Myrange.Offset(0, 1) = Trim(regEx.Replace(strInput, ""))
+    Else
+        Myrange.Offset(0, 1) = ""
+    End If
+End If
+Set regEx = Nothing
+Set wb = Nothing
+End Sub
+Sub Fetch_Names()
+'** This subroutine will fetch names from the mailchain mail body using listed dictionary
+Dim wb As Workbook
+Set wb = GetObject(, "Excel.Application").ActiveWorkbook
+Set Rng = wb.Sheets("signature").Range("Names_Signature")
+Sheets("signature").Activate
+Rng.Select
+If Sheets("signature").Range("B1").Value = "" Or Sheets("signature").Range("C1").Value = "" Then
+srchpath = Sheets("signature").Range("A1").Value
+Else
+srchpath = Sheets("signature").Range("B1").Value
+End If
+For i = 2 To Rng.Count
+    mytext = Split(wb.Sheets("signature").Cells(i, "E").Value, " ")
+    On Error GoTo nxt
+    While mytext(j) <> ""
+        If InStr(srchpath, mytext(j)) > 0 Then
+            wb.Sheets("signature").Range("D1") = Trim(wb.Sheets("signature").Cells(i, "E"))
+            Exit Sub
+        Else
+            wb.Sheets("signature").Range("D1") = ""
+        End If
+    j = j + 1
+    Wend
+nxt:
+On Error GoTo -1
+j = 0
+Next
+Set wb = Nothing
+End Sub
+Sub Append_EV_001YRS_except_nacellerepairs()
+'This macro populates the email information from a selected folder such as 'Converstaion ID', 'Creation Time', 'Sender', SenderName', 'Sender email address', 'To', 'Recipients address'
+Dim xlApp As Excel.Application
+Dim xlWB As Excel.Workbook
+Dim Rng As Excel.Range
+Dim i, j, k, lr, a As Long
+Dim arrHeader As Variant
+Dim coll As Collection
+Dim recips As Outlook.Recipients
+Dim recip As Outlook.Recipient
+Dim pa As Outlook.PropertyAccessor
+Dim StartTime As Double
+Dim MinutesElapsed As String
+Dim olMail As Outlook.MailItem
+Dim olItems As Outlook.Items
+Set olItems = Application.ActiveExplorer.CurrentFolder.Items
+Const PR_SMTP_ADDRESS As String = _
+    "http://schemas.microsoft.com/mapi/proptag/0x39FE001E"
+strFilename = "D:\Vinay\Work\AfterMarket\Outlook Customization\Mail tracker on Daily Basis\Delivarables\HarvestedEmails_Mar2019&On.xlsx"
+Set xlApp = CreateObject("Excel.Application")
+xlApp.Visible = True
+Set xlWB = xlApp.Workbooks.Open(strFilename)
+xlWB.Sheets("Temp").Visible = xlSheetVisible
+xlWB.Sheets("signature").Visible = xlSheetVisible
+i = 2
+xlWB.Sheets(1).Activate
+lr = xlWB.Sheets(1).Range("A1040000").End(xlUp).Row
+With xlWB.Sheets(1)
+    On Error Resume Next
+    'Set Rng = xlWB.Sheets(1).Range(Cells(lr, 1), Cells(2, 1))
+    Set Rng = .Range(Cells(lr, 1), Cells(2, 1))
+    On Error GoTo 0
+    Set Rng = .Range(Cells(lr, 1), Cells(2, 1))
+End With
+blankcel = 15000 'Rng.SpecialCells(xlCellTypeBlanks).Cells.Count
+StartTime = Timer
+iConversation = xlWB.Sheets(1).Cells(lr, 1)
+iEntry = xlWB.Sheets(1).Cells(lr, 9)
+iMail = xlWB.Sheets(1).Cells(lr, 3)
+startitem = 5000 'lr - blankcel
+For i = startitem To olItems.Count
+    On Error GoTo nxtstep
+    Set olMail = olItems(i)
+    If InStr(1, olItems(i).EntryId, iEntry) > 0 And InStr(1, olItems(i).sender, iMail) > 0 And InStr(1, olItems(i).ConversationID, iConversation) > 0 Then
+    irow = i + 1
+    GoTo nxt1
+    End If
+nxtstep:
+On Error GoTo -1
+Next
+nxt1:
+myrow = lr + 1
+'irow = 13850
+For a = irow To olItems.Count
+        With xlWB
+            .Activate
+            On Error GoTo nxt
+            Set olSender = olItems(a).sender
+            If Not (olSender Is Nothing) Then
+            Set olEU = olSender.GetExchangeUser
+                If olEU Is Nothing Then
+                    'xlWB.Sheets(1).Cells(myrow, "E").Value = olItems(a).SenderEmailAddress
+                    xlWB.Sheets(1).Cells(myrow, "E").Value = Right(olItems(a).sender.Address, Len(olItems(a).sender.Address))
+                ElseIf olEU.Alias <> "asg.chv0.mb.nacelrep" Then
+                    xlWB.Sheets(1).Cells(myrow, "E").Value = olEU.PrimarySmtpAddress
+                Else
+                GoTo nxt
+                End If
+            End If
+            On Error GoTo 0
+            xlWB.Sheets(1).Cells(myrow, "A").Value = olItems(a).ConversationID
+            xlWB.Sheets(1).Cells(myrow, "B").Value = olItems(a).CreationTime
+            xlWB.Sheets(1).Cells(myrow, "C").Value = olItems(a).sender
+            xlWB.Sheets(1).Cells(myrow, "D").Value = olItems(a).SenderName
+            xlWB.Sheets(1).Cells(myrow, "F").Value = olItems(a).Subject
+            xlWB.Sheets(1).Cells(myrow, "G").Value = olItems(a).To
+            Set recips = olItems(a).Recipients
+            Set coll = New Collection
+            For Each recip In recips
+                Set pa = recip.PropertyAccessor
+                coll.Add pa.GetProperty(PR_SMTP_ADDRESS)
+            Next
+            For k = 1 To coll.Count
+                xlWB.Sheets("Temp").Cells(k, 1) = coll.Item(k)
+            Next
+            xlWB.Sheets("Temp").Activate
+            xlWB.Sheets("Temp").Range("A:A").RemoveDuplicates Columns:=1, Header:=xlNo
+            xlWB.Sheets("Temp").Range("B1").Value = xlWB.Sheets("Temp").Range("A1").Value
+            j = 2
+            While xlWB.Sheets("Temp").Cells(j, 1).Value <> ""
+                xlWB.Sheets("Temp").Cells(j, 2) = xlWB.Sheets("Temp").Cells(j - 1, 2) & ";" & xlWB.Sheets("Temp").Cells(j, 1)
+            j = j + 1
+            Wend
+            xlWB.Sheets(1).Activate
+            xlWB.Sheets(1).Cells(myrow, "H").Value = xlWB.Sheets("Temp").Cells(j - 1, 2)
+            xlWB.Sheets(1).Cells(myrow, "I").Value = olItems(a).EntryId
+            'If xlWB.Sheets(1).Cells(myrow, "E").Value <> "nacellerepairs@collins.com" Then
+            'With xlWB.Sheets("signature")
+            '    .Activate
+            '    Range("A1").Value = olItems(a).Body
+            '    From_Text
+            '    RegexPattern1
+            '    RegexPattern2
+            '    If xlWB.Sheets("signature").Range("D1").Value = "" Or InStr(xlWB.Sheets("signature").Range("D1").Value, "Nacelle") > 0 Then
+            '        Fetch_Names
+            '    End If
+            'End With
+            'xlWB.Sheets(1).Cells(myrow, "J").Value = Trim(xlWB.Sheets("signature").Range("D1"))
+            'Else
+            'xlWB.Sheets(1).Cells(myrow, "J").Value = ""
+            'End If
+        End With
+    xlWB.Sheets("Temp").Cells.Clear
+    xlWB.Sheets("signature").Columns("A:D").Clear
+    Set coll = Nothing
+    myrow = myrow + 1
+    xlWB.Sheets(1).Activate
+nxt:
+On Error GoTo -1
+Set olSender = Nothing
+Next a
+xlWB.Sheets("Temp").Visible = xlVeryHidden
+xlWB.Sheets("signature").Visible = xlVeryHidden
+xlWB.Worksheets(1).Cells.EntireColumn.AutoFit
+MinutesElapsed = Format((Timer - StartTime) / 86400, "hh:mm:ss")
+MsgBox "Export Completed!! Time taken to append report is " & MinutesElapsed & " minutes", vbInformation
+xlWB.Close SaveChanges:=True
+xlApp.Quit
+Set Rng = Nothing
+Set xlApp = Nothing
+Set xlWB = Nothing
+Set olItems = Nothing
+Set olInboxFolder = Nothing
+Set olNs = Nothing
+End Sub
+Sub Append_SENT_FOLDER_only_nacellerepairs()
+'This macro populates the email information from a selected folder such as 'Converstaion ID', 'Creation Time', 'Sender', SenderName', 'Sender email address', 'To', 'Recipients address'
+Dim xlApp As Excel.Application
+Dim xlWB As Excel.Workbook
+Dim Rng As Excel.Range
+Dim i, j, k, lr, a As Long
+Dim arrHeader As Variant
+Dim coll As Collection
+Dim recips As Outlook.Recipients
+Dim recip As Outlook.Recipient
+Dim pa As Outlook.PropertyAccessor
+Dim StartTime As Double
+Dim MinutesElapsed As String
+Dim olMail As Outlook.MailItem
+Dim olItems As Outlook.Items
+Set olItems = Application.ActiveExplorer.CurrentFolder.Items
+Const PR_SMTP_ADDRESS As String = _
+    "http://schemas.microsoft.com/mapi/proptag/0x39FE001E"
+Const prop As String = "http://schemas.microsoft.com/mapi/proptag/0x7FFE000B"
+strFilename = "D:\Vinay\Work\AfterMarket\Outlook Customization\Mail tracker on Daily Basis\Delivarables\HarvestedEmails_Mar2019&On.xlsx"
+Set xlApp = CreateObject("Excel.Application")
+xlApp.Visible = True
+Set xlWB = xlApp.Workbooks.Open(strFilename)
+xlWB.Sheets("Temp").Visible = xlSheetVisible
+xlWB.Sheets("signature").Visible = xlSheetVisible
+i = 2
+xlWB.Sheets(2).Activate
+lr = xlWB.Sheets(2).Range("A1040000").End(xlUp).Row
+With xlWB.Sheets(2)
+On Error Resume Next
+    Set Rng = .Range(Cells(lr, 1), Cells(2, 1))
+On Error GoTo 0
+    'Set Rng = .Range(Cells(lr, 1), Cells(2, 1))
+End With
+blankcel = 1
+StartTime = Timer
+iConversation = xlWB.Sheets(2).Cells(lr, 1)
+iEntry = xlWB.Sheets(2).Cells(lr, 9)
+iMail = xlWB.Sheets(2).Cells(lr, 3)
+For i = 1 To olItems.Count
+    Set olMail = olItems(i)
+    If InStr(1, olItems(i).EntryId, iEntry) > 0 And InStr(1, olItems(i).sender, iMail) > 0 And InStr(1, olItems(i).ConversationID, iConversation) > 0 Then
+    irow = i + 1
+    GoTo nxt1
+    End If
+Next
+nxt1:
+myrow = lr + 1
+For a = irow To olItems.Count 'earlier irow
+        With xlWB
+            .Activate
+            Set olSender = olItems(a).sender
+            If Not (olSender Is Nothing) Then
+            Set olEU = olSender.GetExchangeUser
+                If olEU Is Nothing Then
+                      xlWB.Sheets(2).Cells(myrow, "E").Value = olItems(a).SenderEmailAddress
+                ElseIf olEU.Alias = "asg.chv0.mb.nacelrep" Then
+                      xlWB.Sheets(2).Cells(myrow, "E").Value = olEU.PrimarySmtpAddress
+                Else
+                GoTo nxt
+                End If
+            End If
+            xlWB.Sheets(2).Cells(myrow, "A").Value = olItems(a).ConversationID
+            xlWB.Sheets(2).Cells(myrow, "B").Value = olItems(a).CreationTime
+            xlWB.Sheets(2).Cells(myrow, "C").Value = olItems(a).sender
+            xlWB.Sheets(2).Cells(myrow, "D").Value = olItems(a).SenderName
+            xlWB.Sheets(2).Cells(myrow, "F").Value = olItems(a).Subject
+            xlWB.Sheets(2).Cells(myrow, "G").Value = olItems(a).To
+            Set recips = olItems(a).Recipients
+            Set coll = New Collection
+            For Each recip In recips
+                Set pa = recip.PropertyAccessor
+                coll.Add pa.GetProperty(PR_SMTP_ADDRESS)
+            Next
+            For k = 1 To coll.Count
+                xlWB.Sheets("Temp").Cells(k, 1) = coll.Item(k)
+            Next
+            xlWB.Sheets("Temp").Activate
+            xlWB.Sheets("Temp").Range("A:A").RemoveDuplicates Columns:=1, Header:=xlNo
+            xlWB.Sheets("Temp").Range("B1").Value = xlWB.Sheets("Temp").Range("A1").Value
+            j = 2
+            While xlWB.Sheets("Temp").Cells(j, 1).Value <> ""
+                xlWB.Sheets("Temp").Cells(j, 2) = xlWB.Sheets("Temp").Cells(j - 1, 2) & ";" & xlWB.Sheets("Temp").Cells(j, 1)
+            j = j + 1
+            Wend
+            xlWB.Sheets(2).Activate
+            xlWB.Sheets(2).Cells(myrow, "H").Value = xlWB.Sheets("Temp").Cells(j - 1, 2).Value
+            xlWB.Sheets(2).Cells(myrow, "I").Value = olItems(a).EntryId
+            If xlWB.Sheets(2).Cells(myrow, "E").Value = "nacellerepairs@collins.com" Then
+'****** New code from starts here
+'                Dim npad As String
+'                Dim FSO As New FileSystemObject
+'                Dim TS As TextStream
+'                npad = "D:\Vinay\Work\Outlook Customization\Mail tracker on Daily Basis\Tools\signature.txt"
+'                Open npad For Output As #1: Close #1
+'                Set olMail = ActiveExplorer.Selection.Item(1)
+'                Set TS = FSO.OpenTextFile(npad, ForAppending, True)
+'                TS.Write (olMail.Body)
+'                TS.Close
+'
+'                '*** Regex which replaces email body starting from the text "From:"
+'                Set objFso = CreateObject("Scripting.FileSystemObject")
+'                Set objTxtFile = objFso.OpenTextFile(npad, 1)
+'                strText = objTxtFile.ReadAll
+'                objTxtFile.Close
+'                Set objTxtFile = Nothing
+'                b = ""
+'                Set objRegEx = CreateObject("VBScript.RegExp")
+'                With objRegEx
+'                    .Global = True
+'                    .MultiLine = True
+'                    .Pattern = "From: ([\w\s]+[\S\W]+)"
+'                    b = objRegEx.Replace(strText, "")
+'                End With
+'                Set objRegEx = Nothing
+'
+'                '*** Clear the email content and copy truncated mail body
+'                Open npad For Output As #1: Close #1
+'                Set TS = FSO.OpenTextFile(npad, ForAppending, True)
+'                TS.Write (b)
+'                TS.Close
+'****** New code from ends here
+
+
+
+
+'            With xlWB.Sheets("signature")
+'                .Activate
+'                Range("A1").Value = olItems(a).Body
+'                From_Text
+'            '****  - Start Checking for DPS plugin used - ****
+'                If xlWB.Sheets("signature").Range("B1").Value = "" Then
+'                Set Myrange = xlWB.Sheets("signature").Range("A1")
+'                    If InStr(Myrange.Value, "* ECCN") > 0 Then
+'                        xlWB.Sheets(2).Cells(myrow, "K").Value = "Y"
+'                    Else
+'                        xlWB.Sheets(2).Cells(myrow, "K").Value = "N"
+'                    End If
+'                Else
+'                    Set Myrange = xlWB.Sheets("signature").Range("B1")
+'                    If InStr(Myrange.Value, "* ECCN") > 0 Then
+'                        xlWB.Sheets(2).Cells(myrow, "K").Value = "Y"
+'                    Else
+'                        xlWB.Sheets(2).Cells(myrow, "K").Value = "N"
+'                    End If
+'                End If
+'            '**** - End of Checking for DPS plugin used - ****
+'                RegexPattern1
+'                RegexPattern2
+'                If xlWB.Sheets("signature").Range("D1").Value = "" Or InStr(xlWB.Sheets("signature").Range("D1").Value, "Nacelle") > 0 Then
+'                    Fetch_Names
+'                End If
+'            End With
+
+        '***** Fetch the signature from One-Off signature format and check for ECCN from email body
+            Dim bodyLines() As String
+            Dim namelineWords() As String
+            Dim l As Long
+            Dim myrng1() As String
+            bodyLines = Split(olItems(a).Body, vbCrLf)
+            For l = LBound(bodyLines) To UBound(bodyLines)
+                If InStr(bodyLines(l), " | ") Then
+                    namelineWords = Split(bodyLines(l), "|")
+                    'MsgBox "first element of namelineWords array: " & namelineWords(0)
+                    Exit For
+                End If
+            Next
+            xlWB.Sheets(2).Cells(myrow, "J").Value = namelineWords(0)
+            xlWB.Sheets("signature").Range("A1").Value = olItems(a).Body
+            Set Myrange = xlWB.Sheets("signature").Range("A1")
+            If InStr(Myrange.Value, "* ECCN") > 0 Then
+                xlWB.Sheets(2).Cells(myrow, "K").Value = "Y"
+            Else
+                xlWB.Sheets(2).Cells(myrow, "K").Value = "N"
+            End If
+            'xlWB.Sheets(2).Cells(myrow, "J").Value = Trim(xlWB.Sheets("signature").Range("D1"))
+        '**** End of Fetch the signature from One-Off signature format and check for ECCN from email body
+            Else
+            xlWB.Sheets(2).Cells(myrow, "J").Value = ""
+            End If
+        Dim myAtt As Outlook.Attachment
+        Const PR_ATTACHMENT_HIDDEN As String = "http://schemas.microsoft.com/mapi/proptag/0x7FFE000B"
+        Set attachmentcollection = New Collection
+        i = 0
+        For Each myAtt In olItems(a).attachments
+            Set pa = myAtt.PropertyAccessor
+            xlWB.Sheets("Temp").Cells.Clear
+            On Error GoTo Handler
+            If InStr(myAtt.FileName, ".xlsx") > 0 Or InStr(myAtt.FileName, ".pdf") > 0 _
+                Or InStr(myAtt.FileName, ".docx") > 0 Or InStr(myAtt.FileName, ".msg") > 0 Then
+                xlWB.Sheets(2).Cells(myrow, "L").Value = "Y"
+                Exit For
+                'attachmentcollection.Add myAtt.FileName 'identifies the attachment names
+            Else
+                xlWB.Sheets(2).Cells(myrow, "L").Value = "N"
+            End If
+        Next myAtt
+        If xlWB.Sheets(2).Cells(myrow, "L").Value = "Y" Then
+            For Each myAtt In olItems(a).attachments
+                attachmentcollection.Add myAtt.FileName 'identifies the each attachment names
+            Next myAtt
+            xlWB.Sheets("Temp").Cells.Clear
+            xlWB.Sheets("Temp").Range("A1").Value = attachmentcollection.Item(1)
+            o = 2
+            While attachmentcollection.Item(o) <> ""
+                xlWB.Sheets("Temp").Cells(o, 1) = xlWB.Sheets("Temp").Cells(o - 1, 1).Value & "; " & attachmentcollection.Item(o)
+            o = o + 1
+            Wend
+        End If
+Handler:
+        On Error GoTo -1
+        If xlWB.Sheets(2).Cells(myrow, "L").Value = "Y" Then _
+            xlWB.Sheets(2).Cells(myrow, "M").Value = xlWB.Sheets("Temp").Cells(o - 1, 1).Value 'Writes the attachment names
+        If myAtt Is Nothing And xlWB.Sheets(2).Cells(myrow, "L").Value = "" Then
+            xlWB.Sheets(2).Cells(myrow, "L").Value = "N"
+        End If
+        End With
+    xlWB.Sheets("Temp").Cells.Clear
+    xlWB.Sheets("signature").Columns("A:D").Clear
+    Set coll = Nothing
+    Set attachmentcollection = Nothing
+    myrow = myrow + 1
+    xlWB.Sheets(2).Activate
+nxt:
+On Error GoTo -1
+Set olSender = Nothing
+Next a
+xlWB.Sheets("Temp").Visible = xlVeryHidden
+xlWB.Sheets("signature").Visible = xlVeryHidden
+xlWB.Worksheets(2).Cells.EntireColumn.AutoFit
+MinutesElapsed = Format((Timer - StartTime) / 86400, "hh:mm:ss")
+MsgBox "Export Completed!! Time taken to append report is " & MinutesElapsed & " minutes", vbInformation
+xlWB.Close SaveChanges:=True
+xlApp.Quit
+Set Rng = Nothing
+Set xlApp = Nothing
+Set xlWB = Nothing
+Set olItems = Nothing
+Set olInboxFolder = Nothing
+Set olNs = Nothing
+End Sub
+Sub parseBodyForText()
+
+    ' Test this sample code in Outlook not Excel
+
+    ' Where mail contains a line in this format
+    '  name | ABC Services | EFG Team
+
+    Dim myItem As Object
+    Dim bodyLines() As String
+    Dim namelineWords() As String
+    Dim i As Long
+
+    ' Open applicable mail
+    Set myItem = ActiveInspector.CurrentItem
+
+    If myItem.Class = olMail Then
+
+        bodyLines = Split(myItem.Body, vbCrLf)
+
+        For i = LBound(bodyLines) To UBound(bodyLines)
+
+            ' Attempt to determine the applicable line
+
+            'If Right(bodyLines(i), 10) = "| EFG Team" Then
+            ' or
+            'If InStr(bodyLines(i), "| ABC Services |") Then
+
+            ' If the above strings are not always present.
+            ' Perhaps search for the "|"
+            ' Increases chance of false positives
+            If InStr(bodyLines(i), " | ") Then
+
+                'Debug.Print "nameline: " & bodyLines(i)
+
+                namelineWords = Split(bodyLines(i), "|")
+                MsgBox "first element of namelineWords array: " & namelineWords(0)
+
+                ' Assumes no false positives
+                Exit For
+
+            End If
+
+        Next
+
+    End If
+
+End Sub
+
+
+************************************************************************************************************************************************************************
+Sub Top_Custo()
+Dim myRules As Outlook.Rules
+Dim rl As Outlook.Rule
+Dim ruleList As String
+Dim st As Outlook.Store
+Set st = Application.Session.DefaultStore
+Set Folder = Application.ActiveExplorer.CurrentFolder
+Set myRules = st.GetRules
+For Each rl In myRules
+    If rl.RuleType = olRuleReceive Then
+        rl.Execute True, Folder
+        ruleList = ruleList & vbCrLf & rl.Name
+    End If
+Next
+End Sub
+Public Sub Clearcategories()
+Dim olItems As Object
+Dim MinutesElapsed As String
+StartTime = Timer
+For Each olItems In Application.ActiveExplorer.CurrentFolder.Items
+    If olItems.Class = olMail Then
+        On Error GoTo nxt
+        arr = Split(olItems.Categories, ",")
+        If UBound(arr) >= 0 Then
+            For j = 0 To UBound(arr)
+                If Trim(arr(j)) = "External" Or Trim(arr(j)) = "Orange Category" Then
+                    'olItems.Display
+                    olItems.GetInspector
+                    arr(j) = ""
+                End If
+            Next
+            olItems.Categories = arr
+            olItems.Close Save
+        End If
+    End If
+nxt:
+On Error GoTo -1
+Next
+MinutesElapsed = Format((Timer - StartTime) / 86400, "hh:mm:ss")
+MsgBox "Time taken to clear contents is " & MinutesElapsed & " minutes", vbInformation
+End Sub
+***********************************************************************************************************************************************************************
+Sub Countemailsperday()
+    Dim objOutlook As Object, objnSpace As Object, objFolder As MAPIFolder
+    Dim EmailCount As Outlook.Items
+    Dim oDate As String
+     
+    'oDate = InputBox("Type the date for count (format YYYY-m-d")
+    oDate = Date
+    Set objOutlook = CreateObject("Outlook.Application")
+    Set objnSpace = objOutlook.GetNamespace("MAPI")
+        On Error Resume Next
+        Set objFolder = Application.ActiveExplorer.CurrentFolder
+        If Err.Number <> 0 Then
+            Err.Clear
+            MsgBox "No such folder."
+        Exit Sub
+        End If
+    Set EmailCount = objOutlook.ActiveExplorer.CurrentFolder.Items
+    MsgBox "Number of emails in the folder: " & EmailCount.Count, , "E-mails in the current folder"
+    Dim ssitem As MailItem
+    Dim dateStr As String
+    Dim myItems As Outlook.Items
+    Dim dict As Object
+    Dim msg As String
+    Set dict = CreateObject("Scripting.Dictionary")
+    Set myItems = objFolder.Items
+    myItems.SetColumns ("ReceivedTime")
+    ' Determine date of each message:
+    For Each myItem In myItems
+        dateStr = GetDate(myItem.ReceivedTime)
+        If dateStr = oDate Then
+            If Not dict.Exists(dateStr) Then
+                dict(dateStr) = 0
+            End If
+            dict(dateStr) = CLng(dict(dateStr)) + 1
+        End If
+    Next myItem
+    msg = ""
+    If dict(dateStr) Is Empty Then
+        dict(dateStr) = 0
+    End If
+    For Each o In dict.Keys
+        msg = oDate & ": " & dict(o) & " items"
+    Next
+    MsgBox msg
+    Set objFolder = Nothing
+    Set objnSpace = Nothing
+    Set objOutlook = Nothing
+End Sub
+Function GetDate(dt As Date) As String
+    GetDate = Month(dt) & "/" & Day(dt) & "/" & Year(dt)
+End Function
+***********************************************************************************************************************************************************************
+Sub LoopThruEmails()
+Dim i As Long
+Dim InboxItems As Outlook.Items
+Dim thisEmail As Object
+Top_Customers
+Set InboxItems = GetItems(GetNS(GetOutlookApp), olFolderInbox)
+'assume there are inbox items
+For i = 1 To InboxItems.Count
+If TypeName(InboxItems.Item(i)) = "MailItem" Then ' it's an email
+    Set thisEmail = InboxItems.Item(i)
+    thisEmail.Display
+    arr = Split(thisEmail.Categories, ",")
+        If UBound(arr) > 0 Then
+            For j = 0 To UBound(arr)
+                If Trim(arr(j)) = "External" Or Trim(arr(j)) = "Blue Category" Or Trim(arr(j)) = "Green Category" Or Trim(arr(j)) = "Orange Category" _
+                Or Trim(arr(j)) = "Purple Category" Or Trim(arr(j)) = "Red Category" Or Trim(arr(j)) = "Yellow Category" Then
+                    arr(j) = ""
+                End If
+            Next
+        On Error GoTo check1
+        thisEmail.Categories = arr
+        Else
+        GoTo nxt
+        End If
+End If
+check1:
+On Error GoTo -1
+nxt:
+thisEmail.Close olSave 'olDiscard
+Next i
+End Sub
+Function GetOutlookApp() As Outlook.Application
+ ' returns reference to native Application object
+Set GetOutlookApp = Outlook.Application
+End Function
+Function GetNS(ByRef app As Outlook.Application) As Outlook.NameSpace
+Set GetNS = app.GetNamespace("MAPI")
+End Function
+Function GetItems(olNs As Outlook.NameSpace, Folder As OlDefaultFolders) As Outlook.Items
+Set GetItems = olNs.Application.ActiveExplorer.CurrentFolder.Items
+End Function
+Sub Top_Customers()
+Dim myRules As Outlook.Rules
+Dim rl As Outlook.Rule
+Dim ruleList As String
+Dim st As Outlook.Store
+Set st = Application.Session.DefaultStore
+Set Folder = Application.ActiveExplorer.CurrentFolder
+Set myRules = st.GetRules
+For Each rl In myRules
+    If rl.RuleType = olRuleReceive And rl.Name = "Top Customer" Then
+        rl.Execute True, Folder
+        ruleList = ruleList & vbCrLf & rl.Name
+    End If
+Next
+End Sub
+***********************************************************************************************************************************************************************
+Sub LoopThruEmails()
+Dim i As Long
+Dim InboxItems As Outlook.Items
+Dim thisEmail As Object
+Top_Customers
+Set InboxItems = GetItems(GetNS(GetOutlookApp), olFolderInbox)
+'assume there are inbox items
+For i = 1 To InboxItems.Count
+If TypeName(InboxItems.Item(i)) = "MailItem" Then ' it's an email
+    Set thisEmail = InboxItems.Item(i)
+    thisEmail.Display
+    arr = Split(thisEmail.Categories, ",")
+        If UBound(arr) > 0 Then
+            For j = 0 To UBound(arr)
+                If Trim(arr(j)) = "External" Or Trim(arr(j)) = "Blue Category" Or Trim(arr(j)) = "Green Category" Or Trim(arr(j)) = "Orange Category" _
+                Or Trim(arr(j)) = "Purple Category" Or Trim(arr(j)) = "Red Category" Or Trim(arr(j)) = "Yellow Category" Then
+                    arr(j) = ""
+                End If
+            Next
+        On Error GoTo check1
+        thisEmail.Categories = arr
+        Else
+        GoTo nxt
+        End If
+End If
+check1:
+On Error GoTo -1
+nxt:
+thisEmail.Close olSave 'olDiscard
+Next i
+End Sub
+Function GetOutlookApp() As Outlook.Application
+ ' returns reference to native Application object
+Set GetOutlookApp = Outlook.Application
+End Function
+Function GetNS(ByRef app As Outlook.Application) As Outlook.NameSpace
+Set GetNS = app.GetNamespace("MAPI")
+End Function
+Function GetItems(olNs As Outlook.NameSpace, Folder As OlDefaultFolders) As Outlook.Items
+Set GetItems = olNs.Application.ActiveExplorer.CurrentFolder.Items
+End Function
+Sub Top_Customers()
+Dim myRules As Outlook.Rules
+Dim rl As Outlook.Rule
+Dim ruleList As String
+Dim st As Outlook.Store
+Set st = Application.Session.DefaultStore
+Set Folder = Application.ActiveExplorer.CurrentFolder
+Set myRules = st.GetRules
+For Each rl In myRules
+    If rl.RuleType = olRuleReceive And rl.Name = "Top Customer" Then
+        rl.Execute True, Folder
+        ruleList = ruleList & vbCrLf & rl.Name
+    End If
+Next
+End Sub
+***********************************************************************************************************************************************************************
+Option Explicit
+
+Sub GetValueUsingRegEx()
+ ' Set reference to VB Script library
+ ' Microsoft VBScript Regular Expressions 5.5
+
+    Dim olMail As Outlook.MailItem
+    Dim Reg1 As RegExp
+    Dim M1 As MatchCollection
+    Dim M As Match
+
+    Set olMail = Application.ActiveExplorer().Selection(1)
+   ' Debug.Print olMail.Body
+
+    Set Reg1 = New RegExp
+
+    With Reg1
+        .Pattern = "\s*[|]+\s*"
+        .Global = True
+    End With
+    If Reg1.test(olMail.Body) Then
+        Set M1 = Reg1.Execute(olMail.Body)
+        For Each M In M1
+            Debug.Print M.SubMatches(1)
+        Next
+    End If
+End Sub
+
+Sub Check_For_Ticket()
+Dim strTicket, strSubject As String
+Dim EmailItem As MailItem
+Dim OL As Object
+Dim Reg1 As RegExp
+Dim M1 As MatchCollection
+Dim M As Match
+Set OL = GetObject(, "Outlook.Application")
+Set EmailItem = Application.ActiveExplorer().Selection(1)
+MsgBox EmailItem.Subject
+Set Reg1 = New RegExp
+
+With Reg1
+    .Pattern = "ASG"
+    .Global = False
+    .IgnoreCase = True
+End With
+If Reg1.test(EmailItem.Subject) Then
+    Set M1 = Reg1.Execute(EmailItem.Subject)
+    For Each M In M1
+        If M.Value = Reg1.Pattern Then
+            MsgBox "Success!!"
+        End If
+    Next
+End If
+End Sub
+
+Sub assign_customcolumn()
+Dim EmailItem As MailItem
+Dim OL As Object
+Dim objProp As Outlook.UserProperty
+Set OL = GetObject(, "Outlook.Application")
+Set EmailItem = Application.ActiveExplorer().Selection(1)
+MsgBox EmailItem.Categories
+Set objProp = OL.EmailItem.UserProperty.Add("PRIORITY - TOP CUSTOMER", olText, True)
+If EmailItem.Categories = "Top Customer" Then
+    objProp.Value = "TOP"
+    EmailItem.Save
+Else
+End If
+End Sub
+Public Sub a()
+  Dim Task As Outlook.TaskItem
+  Dim Selection As Outlook.Selection
+  Dim Folder As Outlook.MAPIFolder
+  Dim EmailItem As MailItem
+  Dim i&
+  Dim objProperty As Outlook.UserProperty
+  Dim UserDefinedFieldName As String
+  UserDefinedFieldName = "Priority - Top Customer"
+  Set Folder = ActiveExplorer.CurrentFolder
+  Set Selection = ActiveExplorer.Selection
+    If Selection.Count > 0 Then
+      For i = 1 To Selection.Count
+        Set EmailItem = Application.ActiveExplorer().Selection(i)
+        If EmailItem.Categories = "Top Customer" Then
+            Set objProperty = EmailItem.UserProperties.Add(UserDefinedFieldName, Outlook.OlUserPropertyType.olText)
+            objProperty.Value = "Top"
+            EmailItem.Save
+        End If
+      Next
+    End If
+End Sub
+
+Sub Check_attachments()
+Dim attachmentcollection As Collection
+Dim Item As Outlook.MailItem
+Dim OL As Object
+Const PR_ATTACHMENT_HIDDEN As String = "http://schemas.microsoft.com/mapi/proptag/0x7FFE000B"
+Dim myAtt As Outlook.Attachment
+Dim allPdf As Boolean
+Dim hidNum, i As Integer
+allPdf = True
+Dim pa As PropertyAccessor
+hidNum = 0
+Set OL = GetObject(, "Outlook.Application")
+Set Item = Application.ActiveExplorer().Selection(1)
+i = 0
+Set attachmentcollection = New Collection
+For Each myAtt In Item.attachments
+        Debug.Print myAtt.DisplayName
+        Set pa = myAtt.PropertyAccessor
+        On Error GoTo Handler
+        If InStr(myAtt.FileName, ".xlsx") > 0 Or InStr(myAtt.FileName, ".pdf") > 0 _
+                Or InStr(myAtt.FileName, ".docx") > 0 Or Not pa.GetProperty(PR_ATTACHMENT_HIDDEN) Then
+            'Not pa.GetProperty(PR_ATTACHMENT_HIDDEN) Or
+'            If Right(LCase(myAtt.FileName), 4) = ".pdf" Then
+'                allPdf = False
+'            End If
+        i = i + 1
+        attachmentcollection.Add myAtt.FileName
+        MsgBox attachmentcollection.Item(i)
+        Else
+            hidNum = hidNum + 1
+        End If
+NextAtt:
+Next myAtt
+Handler:
+On Error GoTo -1
+MsgBox hidNum
+End Sub
